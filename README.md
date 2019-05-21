@@ -5,7 +5,7 @@
 * Supports cascading MAX7219 devices
 * Number of digits per MAX7219 device can be specified
 
-## ESP32 Examples
+## ESP8266 Examples
 
 ```python
 import max7219
