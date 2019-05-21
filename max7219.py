@@ -139,6 +139,9 @@ class SevenSegment:
         self.flush()
 
     def scroll(self, rotate=True, reverse=False, flush=True):
+        """
+        Shifts buffer contents left or right (reverse), with option to wrap around (rotate)
+        """
         if reverse:
             tmp = self._buffer.pop()
             if rotate:
