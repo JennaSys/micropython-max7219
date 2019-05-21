@@ -18,7 +18,7 @@ display.clear()
 
 ## Connections
 
-ESP32            | max7219 LED Driver
+ESP8266          | MAX7219 LED Driver
 ---------------- | ----------------------
 5V               | VCC 
 GND              | GND
