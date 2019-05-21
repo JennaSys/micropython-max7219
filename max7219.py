@@ -29,8 +29,11 @@ SPI_CS = 0    # D3
 class SevenSegment:
     def __init__(self, digits=8, cs=SPI_CS, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE):
         """
-        Constructor: `digits` should be the number of individual digits being displayed. `cs` is the chip select pin.
-        `scan_digits` is the number of digits each max7219 displays
+        Constructor:
+        `digits` should be the total number of individual digits being displayed
+        `cs` is the GPIO port to use for the chip select line of the SPI bus - defaults to GPIO 0 / D3
+        `scan_digits` is the number of digits each individual max7219 displays
+        `baudrate` defaults to 100KHz, note that excessive rates may result in instability (and is probably unnecessary)
         """
 
         self.digits = digits
