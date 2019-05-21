@@ -28,7 +28,9 @@ D5 SCK           | CLK
 
 
 ## Credits
-This library is based on [rm-hull's max7219.py (pre-2017 version)](https://github.com/rm-hull/max7219) for the Raspberry Pi
+This library is based on:
+* [rm-hull's max7219.py (pre-2017 version)](https://github.com/rm-hull/max7219) for the Raspberry Pi
+* [dmadison's Segmented LED Display - ASCII Library](https://github.com/dmadison/LED-Segment-ASCII)
 
 
 ## License
