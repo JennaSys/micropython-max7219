@@ -27,7 +27,7 @@ SPI_CS = 0    # D3
 
 
 class SevenSegment:
-    def __init__(self, digits=8, cs=SPI_CS, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE):
+    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS):
         """
         Constructor:
         `digits` should be the total number of individual digits being displayed
@@ -37,7 +37,7 @@ class SevenSegment:
         """
 
         self.digits = digits
-        self.devices = -(-digits // MAX7219_DIGITS)  # ceiling integer division
+        self.devices = -(-digits // scan_digits)  # ceiling integer division
         self.scan_digits = scan_digits
         self._buffer = [0] * digits
         self._spi = SPI(SPI_BUS, baudrate=baudrate, polarity=0, phase=0)
@@ -51,66 +51,50 @@ class SevenSegment:
         self.clear()
 
     def command(self, register, data):
-        """
-        Sets a specific register some data, replicated for all cascaded devices
-        """
+        """Sets a specific register some data, replicated for all cascaded devices."""
         self._write([register, data] * self.devices)
 
     def _write(self, data):
-        """
-        Send the bytes (which should comprise of alternating command, data values) over the SPI device.
-        """
+        """Send the bytes (which should comprise of alternating command, data values) over the SPI device."""
         self._cs.off()
         self._spi.write(bytes(data))
         self._cs.on()
 
     def clear(self, flush=True):
-        """
-        Clears the buffer and if specified, flushes the display.
-        """
+        """Clears the buffer and if specified, flushes the display."""
         self._buffer = [0] * self.digits
         if flush:
             self.flush()
 
     def flush(self):
-        """
-        For each digit, cascade out the contents of the buffer cells to the SPI device.
-        """
+        """For each digit, cascade out the contents of the buffer cells to the SPI device."""
         for dev in range(self.devices):
             for pos in range(self.scan_digits):
-                self._write([pos + MAX7219_REG_DIGIT0, self._buffer[pos]])
+                self._write([pos + MAX7219_REG_DIGIT0, self._buffer[pos + (dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
 
     def brightness(self, intensity):
-        """
-        Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15.
-        """
+        """Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15."""
         self.command(MAX7219_REG_INTENSITY, intensity)
 
-    def letter(self, position, char, dot=False, redraw=True):
-        """
-        Looks up the appropriate character representation for char and updates the buffer, flushes by default
-        """
+    def letter(self, position, char, dot=False, flush=True):
+        """Looks up the appropriate character representation for char and updates the buffer, flushes by default."""
         value = get_char2(char) | (dot << 7)
         self._buffer[position] = value
 
-        if redraw:
+        if flush:
             self.flush()
 
     def text(self, text):
-        """
-        Outputs the text (as near as possible) on the specific device.
-        """
+        """Outputs the text (as near as possible) on the specific device."""
         self.clear(False)
         text = text[:self.digits]  # make sure we don't overrun the buffer
         for pos, char in enumerate(text):
-            self.letter(pos, char, redraw=False)
+            self.letter(pos, char, flush=False)
 
         self.flush()
 
     def number(self, val):
-        """
-        Formats the value according to the parameters supplied, and displays it
-        """
+        """Formats the value according to the parameters supplied, and displays it."""
         self.clear(False)
         strval = ''
         if isinstance(val, (int, float)):
@@ -139,9 +123,7 @@ class SevenSegment:
         self.flush()
 
     def scroll(self, rotate=True, reverse=False, flush=True):
-        """
-        Shifts buffer contents left or right (reverse), with option to wrap around (rotate)
-        """
+        """Shifts buffer contents left or right (reverse), with option to wrap around (rotate)."""
         if reverse:
             tmp = self._buffer.pop()
             if rotate:
@@ -159,13 +141,9 @@ class SevenSegment:
             self.flush()
 
     def message(self, text, delay=0.4):
-        """
-        Transitions the text message across the devices from left-to-right
-        """
+        """Transitions the text message across the devices from left-to-right."""
         self.clear(False)
         for char in text:
             time.sleep(delay)
-            self.scroll(rotate=False)
+            self.scroll(rotate=False, flush=False)
             self.letter(self.digits-1, char)
-
-# TODO: verify cascading
