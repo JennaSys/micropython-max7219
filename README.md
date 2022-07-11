@@ -7,6 +7,12 @@
 
 max7219.py uses an internal buffer (array) that is a direct representation of the display when flushed.  So buffer[0] is the leftmost digit in the display and buffer[digits] is the rightmost.  Also digit0 is the leftmost and digit7 is rightmost for each MAX7219 device.  Cascaded devices add additional digits to the right.  If less than 8 digits are connected to the MAX7219, set the scan_digits parameter when initializing so that the code propery handles text value inputs and cascading.  The digits initialization value represents the total number of digits across all cascaded devices.
 
+Initialise with reverse flag on boards where display reads backwards:
+
+```python
+display = max7219.SevenSegment(cs=0, reverse=True)
+```
+
 seven_segment_ascii.py maps ascii characters to their segment representations.  get_char() uses a DP-G-F-E-D-C-B-A bit order and get_char2() uses a DP-A-B-C-D-E-F-G bit order (which is what the MAX7219 specifies).
 
 ## ESP8266 Examples

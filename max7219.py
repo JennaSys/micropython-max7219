@@ -27,13 +27,14 @@ SPI_CS = 0    # D3
 
 
 class SevenSegment:
-    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS):
+    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS, reverse=False):
         """
         Constructor:
         `digits` should be the total number of individual digits being displayed
         `cs` is the GPIO port to use for the chip select line of the SPI bus - defaults to GPIO 0 / D3
         `scan_digits` is the number of digits each individual max7219 displays
         `baudrate` defaults to 100KHz, note that excessive rates may result in instability (and is probably unnecessary)
+        `reverse` is a flag for some boards that have displays wired differently
         """
 
         self.digits = digits
@@ -42,6 +43,7 @@ class SevenSegment:
         self._buffer = [0] * digits
         self._spi = SPI(SPI_BUS, baudrate=baudrate, polarity=0, phase=0)
         self._cs = Pin(cs, Pin.OUT, value=1)
+        self.reverse = reverse
 
         self.command(MAX7219_REG_SCANLIMIT, scan_digits-1)    # digits to display on each device  0-7
         self.command(MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
@@ -67,10 +69,17 @@ class SevenSegment:
             self.flush()
 
     def flush(self):
-        """For each digit, cascade out the contents of the buffer cells to the SPI device."""
-        for dev in range(self.devices):
-            for pos in range(self.scan_digits):
-                self._write([pos + MAX7219_REG_DIGIT0, self._buffer[pos + (dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
+        # Check reverse flag
+        if (self.reverse):
+            """For each digit, cascade out the contents of the reversed buffer cells to the SPI device backwards."""
+            for dev in range(self.devices):
+                for pos in reversed(range(self.scan_digits)): # reverse read data in buffer and write to display backwards
+                    self._write([pos + MAX7219_REG_DIGIT0, self._buffer[((self.scan_digits - 1) - pos) + (dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
+        else:
+            """For each digit, cascade out the contents of the buffer cells to the SPI device."""
+            for dev in range(self.devices):
+                for pos in range(self.scan_digits):
+                    self._write([pos + MAX7219_REG_DIGIT0, self._buffer[pos + (dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
 
     def brightness(self, intensity):
         """Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15."""
