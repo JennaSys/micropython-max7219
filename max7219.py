@@ -23,27 +23,30 @@ MAX7219_REG_DISPLAYTEST = 0xF
 
 SPI_BUS = 1  # hardware SPI
 SPI_BAUDRATE = 100000
-SPI_CS = 0    # D3
+SPI_CS = 0  # D3
 
 
 class SevenSegment:
-    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS):
+    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS, spi_bus=SPI_BUS, reverse=False):
         """
         Constructor:
         `digits` should be the total number of individual digits being displayed
-        `cs` is the GPIO port to use for the chip select line of the SPI bus - defaults to GPIO 0 / D3
         `scan_digits` is the number of digits each individual max7219 displays
         `baudrate` defaults to 100KHz, note that excessive rates may result in instability (and is probably unnecessary)
+        `cs` is the GPIO port to use for the chip select line of the SPI bus - defaults to GPIO 0 / D3
+        `spi_bus` is the SPI bus on the controller to utilize - defaults to SPI bus 1
+        `reverse` changes the write-order of characters for displays where digits are wired R-to-L instead of L-to-R
         """
 
         self.digits = digits
         self.devices = -(-digits // scan_digits)  # ceiling integer division
         self.scan_digits = scan_digits
+        self.reverse = reverse
         self._buffer = [0] * digits
-        self._spi = SPI(SPI_BUS, baudrate=baudrate, polarity=0, phase=0)
+        self._spi = SPI(spi_bus, baudrate=baudrate, polarity=0, phase=0)
         self._cs = Pin(cs, Pin.OUT, value=1)
 
-        self.command(MAX7219_REG_SCANLIMIT, scan_digits-1)    # digits to display on each device  0-7
+        self.command(MAX7219_REG_SCANLIMIT, scan_digits - 1)  # digits to display on each device  0-7
         self.command(MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
         self.command(MAX7219_REG_DISPLAYTEST, 0)  # no display test
         self.command(MAX7219_REG_SHUTDOWN, 1)     # not blanking mode
@@ -55,7 +58,7 @@ class SevenSegment:
         self._write([register, data] * self.devices)
 
     def _write(self, data):
-        """Send the bytes (which should comprise of alternating command, data values) over the SPI device."""
+        """Send the bytes (which should be comprised of alternating command, data values) over the SPI device."""
         self._cs.off()
         self._spi.write(bytes(data))
         self._cs.on()
@@ -68,9 +71,18 @@ class SevenSegment:
 
     def flush(self):
         """For each digit, cascade out the contents of the buffer cells to the SPI device."""
+        buffer = self._buffer.copy()
+        if self.reverse:
+            buffer.reverse()
+
         for dev in range(self.devices):
+            if self.reverse:
+                current_dev = self.devices - dev - 1
+            else:
+                current_dev = dev
+
             for pos in range(self.scan_digits):
-                self._write([pos + MAX7219_REG_DIGIT0, self._buffer[pos + (dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
+                self._write([pos + MAX7219_REG_DIGIT0, buffer[pos + (current_dev * self.scan_digits)]] + ([MAX7219_REG_NOOP, 0] * dev))
 
     def brightness(self, intensity):
         """Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15."""
@@ -104,7 +116,7 @@ class SevenSegment:
                 strval = val
 
         if '.' in strval:
-            strval = strval[:self.digits+1]
+            strval = strval[:self.digits + 1]
         else:
             strval = strval[:self.digits]
 
@@ -146,4 +158,4 @@ class SevenSegment:
         for char in text:
             time.sleep(delay)
             self.scroll(rotate=False, flush=False)
-            self.letter(self.digits-1, char)
+            self.letter(self.digits - 1, char)
