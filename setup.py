@@ -7,7 +7,7 @@ sys.path.append("..")
 import sdist_upip
 
 setup(name='micropython-max7219',
-      version='0.1.0',
+      version='0.2.1',
       description='MicroPython driver for MAX7219 with 7-segment modules',
       long_description=open('README.md').read(),
       url='https://github.com/JennaSys/micropython-max7219',
