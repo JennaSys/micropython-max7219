@@ -50,14 +50,14 @@ class SevenSegment:
         self._cs = Pin(pin_cs, Pin.OUT)
         self._cs.on()
 
-        self.command(MAX7219_REG_SCANLIMIT, scan_digits - 1)  # digits to display on each device  0-7
-        self.command(MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
-        self.command(MAX7219_REG_DISPLAYTEST, 0)  # no display test
-        self.command(MAX7219_REG_SHUTDOWN, 1)     # not blanking mode
+        self._command(MAX7219_REG_SCANLIMIT, scan_digits - 1)  # digits to display on each device  0-7
+        self._command(MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
+        self._command(MAX7219_REG_DISPLAYTEST, 0)  # no display test
+        self._command(MAX7219_REG_SHUTDOWN, 1)     # not blanking mode
         self.brightness(7)                        # intensity: range: 0..15
         self.clear()
 
-    def command(self, register, data):
+    def _command(self, register, data):
         """Sets a specific register some data, replicated for all cascaded devices."""
         self._write([register, data] * self.devices)
 
@@ -71,9 +71,9 @@ class SevenSegment:
         """Clears the buffer and if specified, flushes the display."""
         self._buffer = [0] * self.digits
         if flush:
-            self.flush()
+            self._flush()
 
-    def flush(self):
+    def _flush(self):
         """For each digit, cascade out the contents of the buffer cells to the SPI device."""
         buffer = self._buffer.copy()
         if self.reverse:
@@ -90,24 +90,24 @@ class SevenSegment:
 
     def brightness(self, intensity):
         """Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15."""
-        self.command(MAX7219_REG_INTENSITY, intensity)
+        self._command(MAX7219_REG_INTENSITY, intensity)
 
-    def letter(self, position, char, dot=False, flush=True):
+    def _letter(self, position, char, dot=False, flush=True):
         """Looks up the appropriate character representation for char and updates the buffer, flushes by default."""
         value = get_char2(char) | (dot << 7)
         self._buffer[position] = value
 
         if flush:
-            self.flush()
+            self._flush()
 
     def text(self, text):
         """Outputs the text (as near as possible) on the specific device."""
         self.clear(False)
         text = text[:self.digits]  # make sure we don't overrun the buffer
         for pos, char in enumerate(text):
-            self.letter(pos, char, flush=False)
+            self._letter(pos, char, flush=False)
 
-        self.flush()
+        self._flush()
 
     def number(self, val):
         """Formats the value according to the parameters supplied, and displays it."""
@@ -133,12 +133,12 @@ class SevenSegment:
                 if pos < len(strval) - 1:
                     if strval[pos + 1] == '.':
                         dot = True
-                self.letter(pos, char, dot, False)
+                self._letter(pos, char, dot, False)
                 pos += 1
 
-        self.flush()
+        self._flush()
 
-    def scroll(self, rotate=True, reverse=False, flush=True):
+    def _scroll(self, rotate=True, reverse=False, flush=True):
         """Shifts buffer contents left or right (reverse), with option to wrap around (rotate)."""
         if reverse:
             tmp = self._buffer.pop()
@@ -154,12 +154,12 @@ class SevenSegment:
                 self._buffer.append(0x00)
 
         if flush:
-            self.flush()
+            self._flush()
 
     def message(self, text, delay=0.4):
         """Transitions the text message across the devices from left-to-right."""
         self.clear(False)
         for char in text:
             time.sleep(delay)
-            self.scroll(rotate=False, flush=False)
-            self.letter(self.digits - 1, char)
+            self._scroll(rotate=False, flush=False)
+            self._letter(self.digits - 1, char)
