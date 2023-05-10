@@ -3,10 +3,9 @@ import time
 
 from seven_segment_ascii import get_char2
 
-
 MAX7219_DIGITS = 8
 
-MAX7219_REG_NOOP = 0x0
+MAX7219_REG_NOOP   = 0x0
 MAX7219_REG_DIGIT0 = 0x1
 MAX7219_REG_DIGIT1 = 0x2
 MAX7219_REG_DIGIT2 = 0x3
@@ -15,25 +14,24 @@ MAX7219_REG_DIGIT4 = 0x5
 MAX7219_REG_DIGIT5 = 0x6
 MAX7219_REG_DIGIT6 = 0x7
 MAX7219_REG_DIGIT7 = 0x8
-MAX7219_REG_DECODEMODE = 0x9
-MAX7219_REG_INTENSITY = 0xA
-MAX7219_REG_SCANLIMIT = 0xB
-MAX7219_REG_SHUTDOWN = 0xC
+MAX7219_REG_DECODEMODE  = 0x9
+MAX7219_REG_INTENSITY   = 0xA
+MAX7219_REG_SCANLIMIT   = 0xB
+MAX7219_REG_SHUTDOWN    = 0xC
 MAX7219_REG_DISPLAYTEST = 0xF
 
 SPI_BUS = 1  # hardware SPI
 SPI_BAUDRATE = 100000
-SPI_CS = 0  # D3
-
 
 class SevenSegment:
-    def __init__(self, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, cs=SPI_CS, spi_bus=SPI_BUS, reverse=False):
-        """
+    def __init__(self, pin_cs, pin_clk, pin_din, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, spi_bus=SPI_BUS, reverse=False):        """
         Constructor:
         `digits` should be the total number of individual digits being displayed
         `scan_digits` is the number of digits each individual max7219 displays
         `baudrate` defaults to 100KHz, note that excessive rates may result in instability (and is probably unnecessary)
-        `cs` is the GPIO port to use for the chip select line of the SPI bus - defaults to GPIO 0 / D3
+        `pin_cs` is the GPIO pin to use for the chip select line
+        `pin_clk` is the GPIO pin for the clock
+        `pin_din` is the GPIO pin for the "Data In" or MOSI
         `spi_bus` is the SPI bus on the controller to utilize - defaults to SPI bus 1
         `reverse` changes the write-order of characters for displays where digits are wired R-to-L instead of L-to-R
         """
@@ -43,8 +41,14 @@ class SevenSegment:
         self.scan_digits = scan_digits
         self.reverse = reverse
         self._buffer = [0] * digits
-        self._spi = SPI(spi_bus, baudrate=baudrate, polarity=0, phase=0)
-        self._cs = Pin(cs, Pin.OUT, value=1)
+        self._spi = SPI(spi_bus,
+                        baudrate=baudrate,
+                        polarity=0,
+                        phase=0,
+                        sck=Pin(pin_clk),
+                        mosi=Pin(pin_din))
+        self._cs = Pin(pin_cs, Pin.OUT)
+        self._cs.on()
 
         self.command(MAX7219_REG_SCANLIMIT, scan_digits - 1)  # digits to display on each device  0-7
         self.command(MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
