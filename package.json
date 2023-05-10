@@ -1,0 +1,14 @@
+{
+  "name": "max7219",
+  "description": "MicroPython driver for MAX7219 with 7-segment modules",
+  "urls": [
+    ["max7219.py", "github:PaulDash/micropython-max7219/max7219.py"],
+    ["seven_segment_ascii.py", "github:PaulDash/micropython-max7219/seven_segment_ascii.py"]
+  ],
+  "version": "0.2.1.1",
+  "license": "MIT",
+  "author":  "John Sheehan <jennasyseng@gmail.com>",
+  "contributors": [
+    "Paul Dash <paul@dash.training> (http://dash.training)"
+  ]
+}
