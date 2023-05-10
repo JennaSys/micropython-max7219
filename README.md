@@ -1,6 +1,12 @@
 # micropython-max7219
 **MicroPython driver for MAX7219 with 7-segment modules**
 
+
+_Trying to understand the code and port this to the new "mip" package manager so I can use it easily on my Raspberry Pi Pico._
+TODO: create correct package dependancies
+TODO: simplify parameters
+
+
 * Utilizes user specified SPI bus and CS line.
 * Supports cascading MAX7219 devices
 * Number of digits per MAX7219 device can be specified
