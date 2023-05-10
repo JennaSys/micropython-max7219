@@ -24,7 +24,8 @@ SPI_BUS = 1  # hardware SPI
 SPI_BAUDRATE = 100000
 
 class SevenSegment:
-    def __init__(self, pin_cs, pin_clk, pin_din, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, spi_bus=SPI_BUS, reverse=False):        """
+    def __init__(self, pin_cs, pin_clk, pin_din, digits=8, scan_digits=MAX7219_DIGITS, baudrate=SPI_BAUDRATE, spi_bus=SPI_BUS, reverse=False):
+        """
         Constructor:
         `digits` should be the total number of individual digits being displayed
         `scan_digits` is the number of digits each individual max7219 displays
